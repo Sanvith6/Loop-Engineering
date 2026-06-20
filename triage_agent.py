@@ -11,8 +11,8 @@ load_dotenv()
 
 # Configuration
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-MAKER_MODEL = os.getenv("MAKER_MODEL", "google/gemini-2.5-flash")
-CHECKER_MODEL = os.getenv("CHECKER_MODEL", "meta-llama/llama-3.1-70b-instruct")
+MAKER_MODEL = os.getenv("MAKER_MODEL", "nex-agi/nex-n2-pro:free")
+CHECKER_MODEL = os.getenv("CHECKER_MODEL", "nex-agi/nex-n2-pro:free")
 OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"
 
 # Assert API key is set
@@ -123,6 +123,8 @@ def query_openrouter(prompt, system_prompt, model):
         response = requests.post(OPENROUTER_URL, headers=headers, json=data, timeout=60)
         response.raise_for_status()
         resp_json = response.json()
+        if "choices" not in resp_json:
+            print(f"Unexpected response body: {json.dumps(resp_json)}", file=sys.stderr)
         return resp_json["choices"][0]["message"]["content"]
     except Exception as e:
         print(f"OpenRouter API call failed: {e}", file=sys.stderr)
