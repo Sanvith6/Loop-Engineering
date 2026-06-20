@@ -1,0 +1,46 @@
+name: Daily Repo Triage Loop
+
+on:
+  schedule:
+    # Run daily at midnight UTC
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # Allow manual execution via the GitHub Action UI
+
+jobs:
+  triage:
+    runs-on: ubuntu-latest
+
+    permissions:
+      contents: write  # Requires permission to push the triage branches
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0 # Fetch all history for git analysis
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+
+      - name: Configure Git Credentials
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Run Daily Triage Agent
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          MAKER_MODEL: "google/gemini-2.5-flash"
+          CHECKER_MODEL: "meta-llama/llama-3.1-70b-instruct"
+          PUSH_TO_REMOTE: "true"
+        run: |
+          python triage_agent.py
